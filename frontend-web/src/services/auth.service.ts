@@ -24,8 +24,15 @@ export const authService = {
    * Register new user
    */
   async register(userData: RegisterRequest): Promise<any> {
+    const parts = userData.fullName.split(' ');
+    const firstName = parts[0];
+    const lastName = parts.slice(1).join(' ') || parts[0]; // Default to firstName if lastName is empty
+
     const { data } = await api.post('/auth/register', {
-      ...userData,
+      email: userData.email,
+      password: userData.password,
+      firstName,
+      lastName,
       role: userData.role || 'STUDENT',
     });
     return data;
