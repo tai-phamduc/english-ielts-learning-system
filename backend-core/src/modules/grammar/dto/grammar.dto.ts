@@ -1,4 +1,5 @@
-import { IsString, IsInt, IsOptional, IsUrl, Min } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsUrl, Min, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateGrammarBookDto {
   @IsString()
@@ -55,6 +56,26 @@ export class UpdateGrammarBookDto {
   unitCount?: number;
 }
 
+export class GrammarExerciseDto {
+  @IsString()
+  section: string;
+
+  @IsString()
+  question: string;
+
+  @IsString()
+  answer: string;
+
+  @IsString()
+  type: string;
+
+  @IsInt()
+  order: number;
+
+  @IsOptional()
+  options?: any;
+}
+
 export class CreateGrammarUnitDto {
   @IsString()
   bookId: string;
@@ -68,6 +89,12 @@ export class CreateGrammarUnitDto {
   @IsString()
   @IsOptional()
   theoryContent?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => GrammarExerciseDto)
+  exercises?: GrammarExerciseDto[];
 }
 
 export class UpdateGrammarUnitDto {
@@ -82,4 +109,10 @@ export class UpdateGrammarUnitDto {
   @IsString()
   @IsOptional()
   theoryContent?: string;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => GrammarExerciseDto)
+  exercises?: GrammarExerciseDto[];
 }

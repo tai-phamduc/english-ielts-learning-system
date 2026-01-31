@@ -84,6 +84,15 @@ export class GrammarController {
     return this.grammarService.updateUnit(id, dto);
   }
 
+  @Get('admin/units/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAdminUnit(@Param('id') id: string) {
+    const unit = await this.grammarService.getUnit(id);
+    if (!unit) throw new NotFoundException('Grammar unit not found');
+    return unit;
+  }
+
   @Delete('units/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

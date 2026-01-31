@@ -5,25 +5,22 @@ import React, { useState } from "react";
 interface GrammarLessonClientProps {
   topicName: string;
   topicSlug: string;
-  unitId: string; // e.g. "1"
-  unitTitle: string; // e.g. "Present continuous"
+  unitId: string;
+  unitTitle: string;
+  initialData: {
+      theory: string;
+      exercises: any[];
+  }
 }
 
-import { intermediateUnitContent } from '../../data';
-
-const defaultData = {
-  theory: '<div class="p-4">Content coming soon...</div>',
-  exercises: []
-};
-
-export default function GrammarLessonClient({ topicName, topicSlug, unitId, unitTitle }: GrammarLessonClientProps) {
+export default function GrammarLessonClient({ topicName, topicSlug, unitId, unitTitle, initialData }: GrammarLessonClientProps) {
   const [activeTab, setActiveTab] = useState<'theory' | 'exercise'>('theory');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState<{ correct: number; total: number; errors: any[] }>({ correct: 0, total: 0, errors: [] });
   const [lessonProgress, setLessonProgress] = useState({ theoryCompleted: false, exerciseCompleted: false });
   const [isLoaded, setIsLoaded] = useState(false);
-  const grammarData = intermediateUnitContent[unitId] || defaultData;
+  const grammarData = initialData;
 
   // Load progress
   React.useEffect(() => {

@@ -11,11 +11,14 @@ import {
 const CACHE_TTL = 3600;
 const CACHE_PREFIX = 'grammar';
 
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+
 @Injectable()
 export class GrammarService {
   constructor(
     private prisma: PrismaService,
     private redis: RedisService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   // ==================== READ OPERATIONS ====================
@@ -63,6 +66,17 @@ export class GrammarService {
     return book;
   }
 
+  async getUnit(unitId: string) {
+    const unit = await this.prisma.grammarUnit.findUnique({
+      where: { id: unitId },
+      include: {
+        book: { select: { id: true, slug: true, name: true } },
+        exercises: { orderBy: { order: 'asc' } },
+      },
+    });
+    return unit;
+  }
+
   async getUnitWithContent(unitId: string) {
     const cacheKey = `${CACHE_PREFIX}:unit:${unitId}`;
     const cached = await this.redis.getJson(cacheKey);
@@ -76,15 +90,62 @@ export class GrammarService {
       },
     });
 
-    if (unit) await this.redis.setJson(cacheKey, unit, CACHE_TTL);
-    return unit;
+    if (!unit) return null;
+
+    // Transform exercises to nested structure
+    const exercisesMap = new Map<string, any>();
+
+    for (const ex of unit.exercises) {
+        if (!exercisesMap.has(ex.section)) {
+             // Parse options safely
+             let options: any = {};
+             if (typeof ex.options === 'object') {
+                 options = ex.options;
+             }
+             
+            exercisesMap.set(ex.section, {
+                id: ex.section,
+                question: options?.instruction || '',
+                type: ex.type,
+                verbs: options?.verbs,
+                items: [],
+                matches: []
+            });
+        }
+        
+        const group = exercisesMap.get(ex.section);
+        const options: any = typeof ex.options === 'object' ? ex.options : {};
+
+        if (ex.type === 'match') {
+             group.matches.push({
+                 left: ex.question,
+                 right: ex.answer,
+                 isExample: options?.isExample || false
+             });
+        } else {
+            group.items.push({
+                label: ex.question,
+                answer: ex.answer,
+                value: ex.answer, // Fallback
+                isExample: options?.isExample || false
+            });
+        }
+    }
+
+    const transformedUnit = {
+        ...unit,
+        exercises: Array.from(exercisesMap.values())
+    };
+
+    await this.redis.setJson(cacheKey, transformedUnit, CACHE_TTL);
+    return transformedUnit;
   }
 
   // ==================== BOOK CRUD ====================
 
   async createBook(dto: CreateGrammarBookDto) {
     const book = await this.prisma.grammarBook.create({ data: dto });
-    await this.invalidateCache();
+    this.eventEmitter.emit('grammar.updated');
     return book;
   }
 
@@ -93,40 +154,65 @@ export class GrammarService {
       where: { id },
       data: dto,
     });
-    await this.invalidateCache();
+    this.eventEmitter.emit('grammar.updated');
     return book;
   }
 
   async deleteBook(id: string) {
     await this.prisma.grammarBook.delete({ where: { id } });
-    await this.invalidateCache();
+    this.eventEmitter.emit('grammar.updated');
     return { message: 'Grammar book deleted successfully' };
   }
 
   // ==================== UNIT CRUD ====================
 
   async createUnit(dto: CreateGrammarUnitDto) {
-    const unit = await this.prisma.grammarUnit.create({ data: dto });
-    await this.invalidateCache();
+    const { exercises, ...rest } = dto;
+    const unit = await this.prisma.grammarUnit.create({
+      data: {
+        ...rest,
+        exercises: exercises ? { create: exercises } : undefined,
+      },
+    });
+    this.eventEmitter.emit('grammar.updated');
     return unit;
   }
 
   async updateUnit(id: string, dto: UpdateGrammarUnitDto) {
+    const { exercises, ...rest } = dto;
+    
+    // If exercises are provided, we replace all existing ones (simplest strategy for full unit update)
+    // Or we could implement smarter diffing, but for now flush-and-replace is fine for Admin UI.
+    const data: any = { ...rest };
+    
+    if (exercises) {
+        data.exercises = {
+            deleteMany: {},
+            create: exercises
+        };
+    }
+
     const unit = await this.prisma.grammarUnit.update({
       where: { id },
-      data: dto,
+      data: data,
     });
-    await this.invalidateCache();
+    this.eventEmitter.emit('grammar.updated');
     return unit;
   }
 
   async deleteUnit(id: string) {
     await this.prisma.grammarUnit.delete({ where: { id } });
-    await this.invalidateCache();
+    this.eventEmitter.emit('grammar.updated');
     return { message: 'Grammar unit deleted successfully' };
   }
 
   // ==================== CACHE ====================
+
+  @OnEvent('grammar.updated')
+  async handleGrammarUpdated() {
+    console.log('🔄 Grammar updated, invalidating cache...');
+    await this.invalidateCache();
+  }
 
   async invalidateCache(pattern?: string) {
     await this.redis.delByPattern(pattern || `${CACHE_PREFIX}:*`);

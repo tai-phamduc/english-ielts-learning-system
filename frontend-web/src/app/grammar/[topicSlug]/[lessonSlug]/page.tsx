@@ -1,22 +1,49 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { grammarBooks } from "../../data";
+import { notFound, useParams } from "next/navigation";
+import { grammarApi } from "@/services/learning.api";
+import { GrammarUnitWithContent } from "@/types";
 import GrammarLessonClient from "./GrammarLessonClient";
 
-export default async function UnitPage({
-  params
-}: {
-  params: { topicSlug: string; lessonSlug: string }
-}) {
-  const { topicSlug, lessonSlug } = await params;
+export default function UnitPage() {
+  const params = useParams();
+  const topicSlug = params.topicSlug as string;
+  const lessonSlug = params.lessonSlug as string; // This is the unit ID
+  
+  const [unit, setUnit] = useState<GrammarUnitWithContent | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const book = grammarBooks.find((b) => b.id === topicSlug);
+  // In the migrated version, lessonSlug IS the unit ID (UUID)
+  const unitId = lessonSlug;
 
-  // Extract unit ID
-  const unitId = lessonSlug.replace("unit", "");
-  const unit = book?.units.find(u => u.id === parseInt(unitId));
-  const unitTitle = unit?.title || "Grammar Lesson";
+  useEffect(() => {
+    const fetchUnit = async () => {
+        try {
+            const data = await grammarApi.getUnit(unitId);
+            setUnit(data);
+        } catch (error) {
+            console.error("Failed to fetch unit", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    if (unitId) fetchUnit();
+  }, [unitId]);
+  
+  if (loading) {
+     return (
+      <div className="container mx-auto max-w-screen-xl px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <div className="w-12 h-12 border-4 border-[#FFC600] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!unit) {
+    return notFound();
+  }
+
   const backLink = `/grammar/${topicSlug}`;
 
   return (
@@ -29,10 +56,14 @@ export default async function UnitPage({
       </Link>
 
       <GrammarLessonClient
-        topicName={book?.name || "Grammar Book"}
+        topicName={unit.book?.name || "Grammar Book"}
         topicSlug={topicSlug}
-        unitId={unitId}
-        unitTitle={unitTitle}
+        unitId={unit.id}
+        unitTitle={unit.title}
+        initialData={{
+            theory: unit.theoryContent || '<p>No content available.</p>',
+            exercises: unit.exercises || []
+        }}
       />
     </div>
   );

@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface Unit {
-    id: number;
+    id: string;
     title: string;
+    order: number;
 }
 
 interface UnitListClientProps {
@@ -39,7 +40,7 @@ export default function UnitListClient({ units, topicSlug, bookColor, bookLevel 
                 return (
                     <Link
                         key={unit.id}
-                        href={`/grammar/${topicSlug}/unit${unit.id}`}
+                        href={`/grammar/${topicSlug}/${unit.id}`}
                         className="block group"
                     >
                         <div className={`

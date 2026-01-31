@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -43,9 +44,13 @@ import { CacheModule } from './common/cache/cache.module';
     AiClientModule,
 
     // Learning content modules
+    // Learning content modules
     VocabularyModule,
     GrammarModule,
     PronunciationModule,
+    
+    // Events
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

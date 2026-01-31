@@ -164,6 +164,7 @@ export interface GrammarBook {
   color: string;
   unitCount: number;
   _count?: { units: number };
+  units?: GrammarUnit[];
 }
 
 export interface GrammarUnit {

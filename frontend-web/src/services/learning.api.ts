@@ -67,6 +67,31 @@ export const grammarApi = {
     const { data } = await api.get<GrammarUnitWithContent>(`/grammar/units/${id}`);
     return data;
   },
+  getAdminUnit: async (id: string) => {
+    const { data } = await api.get<GrammarUnitWithContent>(`/grammar/admin/units/${id}`);
+    return data;
+  },
+  
+  // Admin methods
+  createBook: async (data: any) => {
+    const { data: result } = await api.post<GrammarBook>('/grammar/books', data);
+    return result;
+  },
+  deleteBook: async (id: string) => {
+    await api.delete(`/grammar/books/${id}`);
+  },
+  
+  createUnit: async (data: any) => {
+    const { data: result } = await api.post<GrammarUnitWithContent>('/grammar/units', data);
+    return result;
+  },
+  updateUnit: async (id: string, data: any) => {
+    const { data: result } = await api.put<GrammarUnitWithContent>(`/grammar/units/${id}`, data);
+    return result;
+  },
+  deleteUnit: async (id: string) => {
+    await api.delete(`/grammar/units/${id}`);
+  },
 };
 
 // ============================================================

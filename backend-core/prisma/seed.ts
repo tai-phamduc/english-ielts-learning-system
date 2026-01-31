@@ -372,6 +372,109 @@ async function main() {
 
   // Seed Grammar Books
   console.log('📖 Seeding grammar books...');
+  
+  // Intermediate Unit 1 Content
+  const intermediateUnit1Theory = `
+      <div class="space-y-6 text-gray-800">
+        <section>
+          <div class="flex items-start gap-4 mb-6">
+             <div class="bg-gray-100 p-2 rounded text-4xl font-bold text-blue-600">1</div>
+             <div>
+                <h1 class="text-3xl font-bold mb-2">Present continuous (I am doing)</h1>
+             </div>
+          </div>
+
+          <h3 class="text-xl font-bold mb-4 text-blue-800">A. Study this example situation</h3>
+          
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+             <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="flex-1">
+                   <p class="font-medium text-lg mb-2">Sarah is in her car. She is on her way to work.</p>
+                   <p class="text-xl font-bold text-blue-600 mb-2">She’s driving to work.</p>
+                   <p class="text-gray-600">(= She is driving ...)</p>
+                   <p class="mt-4 text-gray-700 italic border-l-4 border-gray-300 pl-4">
+                      This means: she is driving now, at the time of speaking. The action is not finished.
+                   </p>
+                </div>
+             </div>
+          </div>
+
+          <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-8">
+             <p class="text-lg font-bold text-blue-900 mb-4 text-center">am/is/are + -ing is the present continuous:</p>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="bg-white p-3 rounded shadow-sm">
+                   I <strong>am</strong> <span class="text-gray-500">(= I'm)</span>
+                </div>
+                <div class="bg-white p-3 rounded shadow-sm">
+                   he/she/it <strong>is</strong> <span class="text-gray-500">(= he's etc.)</span>
+                </div>
+                <div class="bg-white p-3 rounded shadow-sm">
+                   we/you/they <strong>are</strong> <span class="text-gray-500">(= we're etc.)</span>
+                </div>
+                <div class="md:col-span-3 bg-blue-100 p-3 rounded font-bold text-blue-800">
+                   driving / working / doing etc.
+                </div>
+             </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-xl font-bold mb-4 text-blue-800">B. "I am doing" (I am in the middle of doing it)</h3>
+          
+          <p class="mb-4">I am doing something = I started doing it and I haven’t finished; I’m in the middle of doing it.</p>
+          
+          <ul class="space-y-3 mb-6">
+            <li class="flex gap-2">
+               <span class="text-green-500 font-bold">✓</span>
+               <span>Please don’t make so much noise. <strong>I’m trying</strong> to work. <span class="text-red-400 text-sm">(not I try)</span></span>
+            </li>
+            <li class="flex gap-2">
+               <span class="text-green-500 font-bold">✓</span>
+               <span>‘Where’s Mark?’ ‘<strong>He’s having</strong> a shower.’ <span class="text-red-400 text-sm">(not He has a shower)</span></span>
+            </li>
+            <li class="flex gap-2">
+               <span class="text-green-500 font-bold">✓</span>
+               <span>Let’s go out now. It <strong>isn’t raining</strong> any more. <span class="text-red-400 text-sm">(not It doesn’t rain)</span></span>
+            </li>
+            <li class="flex gap-2">
+               <span class="text-green-500 font-bold">✓</span>
+               <span>How’s your new job? <strong>Are you enjoying</strong> it?</span>
+            </li>
+          </ul>
+
+          <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400 mb-6">
+             <p class="font-bold text-yellow-800 mb-1">Note:</p>
+             <p>Sometimes the action is not happening exactly at the time of speaking.</p>
+             <p class="mt-2 text-sm">Example: Steve is talking to a friend on the phone. He says "I’m reading a really good book..."</p>
+             <p class="text-xs text-gray-500 italic">He is not reading it right now, but he has not finished it.</p>
+          </div>
+        </section>
+
+        <section>
+          <h3 class="text-xl font-bold mb-4 text-blue-800">C. Changes happening around now</h3>
+          <p class="mb-4">We use the present continuous when we talk about a change that has started to happen. We often use these verbs:</p>
+          
+          <div class="flex flex-wrap gap-2 mb-6">
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">getting</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">becoming</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">changing</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">improving</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">starting</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">beginning</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">increasing</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">rising</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">falling</span>
+             <span class="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">growing</span>
+          </div>
+          
+          <ul class="list-disc pl-5 space-y-2 text-gray-700">
+             <li>Is your English <strong>getting</strong> better?</li>
+             <li>The population of the world <strong>is increasing</strong> very fast.</li>
+             <li>At first I didn’t like my job, but I’m <strong>starting</strong> to enjoy it now.</li>
+          </ul>
+        </section>
+      </div>`;
+
   for (const book of grammarBooks) {
     const createdBook = await prisma.grammarBook.create({
       data: {
@@ -386,11 +489,129 @@ async function main() {
           create: book.units.map(unit => ({
             title: unit.title,
             order: unit.order,
+            theoryContent: (book.slug === 'intermediate' && unit.order === 1) ? intermediateUnit1Theory : null,
           })),
         },
       },
     });
     console.log(`  ✓ Created: ${createdBook.name}`);
+
+    // Seed Exercises for Intermediate Unit 1
+    if (book.slug === 'intermediate') {
+        const unit1 = await prisma.grammarUnit.findFirst({
+            where: { bookId: createdBook.id, order: 1 }
+        });
+
+        if (unit1) {
+            // Exercise 1.1: Match Pictures (Verbs)
+            const ex1Items = [
+                { label: "1. She ________ a picture.", answer: "is taking", isExample: true, value: "She's taking a picture." },
+                { label: "2. He ________ a shoelace.", answer: "is tying" },
+                { label: "3. They ________ the road.", answer: "are crossing" },
+                { label: "4. He ________ his head.", answer: "is scratching" },
+                { label: "5. She ________ behind a tree.", answer: "is hiding" },
+                { label: "6. They ________ to somebody.", answer: "are waving" },
+            ];
+            await prisma.grammarExercise.createMany({
+                data: ex1Items.map((item, idx) => ({
+                    unitId: unit1.id,
+                    section: "1.1",
+                    question: item.label,
+                    answer: item.answer,
+                    type: "fill_blank",
+                    options: { 
+                        instruction: "What’s happening in the pictures? Choose from these verbs:",
+                        verbs: ["cross", "hide", "scratch", "take", "tie", "wave"],
+                        isExample: item.isExample
+                    },
+                    order: idx + 1
+                }))
+            });
+
+            // Exercise 1.2: Match Sentences
+            const ex2Matches = [
+                { left: "1. Please don’t make so much noise.", right: "f. I’m trying to work." },
+                { left: "2. We need to leave soon.", right: "e. It’s getting late." },
+                { left: "3. I don’t have anywhere to live right now.", right: "g. I’m staying with friends." },
+                { left: "4. I need to eat something soon.", right: "a. I’m getting hungry." },
+                { left: "5. They don’t need their car any more.", right: "d. They’re trying to sell it." },
+                { left: "6. Things are not so good at work.", right: "h. The company is losing money." },
+                { left: "7. It isn’t true what they say.", right: "b. They’re lying." },
+                { left: "8. We’re going to get wet.", right: "c. It’s starting to rain." },
+            ];
+             await prisma.grammarExercise.createMany({
+                data: ex2Matches.map((item, idx) => ({
+                    unitId: unit1.id,
+                    section: "1.2",
+                    question: item.left,
+                    answer: item.right,
+                    type: "match",
+                    options: { 
+                        instruction: "The sentences on the right follow those on the left. Which sentence goes with which?",
+                    },
+                    order: idx + 1
+                }))
+            });
+
+            // Exercise 1.3: Questions
+            const ex3Items = [
+               { label: "1. What’s all that noise? What’s happening? (what / happen?)", isExample: true, value: "What's happening?" },
+               { label: "2. What’s the matter? (why / you / cry?)", answer: "Why are you crying?" },
+               { label: "3. Where’s your mother? (she / work / today?)", answer: "Is she working today?" },
+               { label: "4. I haven’t seen you for ages. (what / you / do / these days?)", answer: "What are you doing these days?" },
+               { label: "5. Amy is a student. (what / she / study?)", answer: "What is she studying?" },
+               { label: "6. Who are those people? (what / they / do?)", answer: "What are they doing?" },
+               { label: "7. I heard you started a new job. (you / enjoy / it?)", answer: "Are you enjoying it?" },
+               { label: "8. We’re not in a hurry. (why / you / walk / so fast?)", answer: "Why are you walking so fast?" },
+            ];
+            await prisma.grammarExercise.createMany({
+                data: ex3Items.map((item, idx) => ({
+                    unitId: unit1.id,
+                    section: "1.3",
+                    question: item.label,
+                    answer: item.answer || item.value || "",
+                    type: "rewrite",
+                    options: { 
+                        instruction: "Write questions. Use the present continuous.",
+                        isExample: item.isExample
+                    },
+                    order: idx + 1
+                }))
+            });
+
+             // Exercise 1.4: Fill Blank
+            const ex4Items = [
+              { label: "1. Please don’t make so much noise. I ________ (try) to work.", answer: "am trying", isExample: true },
+              { label: "2. Let’s go out now. It ________ (rain) any more.", answer: "isn't raining" },
+              { label: "3. You can turn off the radio. I ________ (listen) to it.", answer: "am not listening" },
+              { label: "4. Kate phoned last night. She’s on holiday with friends. She ________ (have) a great time and doesn’t want to come back.", answer: "is having" },
+              { label: "5. Andrew started evening classes recently. He ________ (learn) Japanese.", answer: "is learning" },
+              { label: "6. Paul and Sarah have had an argument and now they ________ (speak) to one another.", answer: "are not speaking" },
+              { label: "7. The situation is already very bad and now it ________ (get) worse.", answer: "is getting" },
+              { label: "8. Tim ________ (work) today. He’s taken the day off.", answer: "isn't working" },
+              { label: "9. I ________ (look) for Sophie. Do you know where she is?", answer: "am looking" },
+              { label: "10. The washing machine has been repaired. It ________ (work) now.", answer: "is working" },
+              { label: "11. They ________ (build) a new hospital. It will be finished next year.", answer: "are building" },
+              { label: "12. Ben is a student, but he’s not very happy. He ________ (enjoy) his course.", answer: "is not enjoying" },
+              { label: "13. The weather ________ (change). Look at those clouds. I think it’s going to rain.", answer: "is changing" },
+              { label: "14. Dan has been in the same job for a long time. He ________ (start) to get bored with it.", answer: "is starting" },
+            ];
+             await prisma.grammarExercise.createMany({
+                data: ex4Items.map((item, idx) => ({
+                    unitId: unit1.id,
+                    section: "1.4",
+                    question: item.label,
+                    answer: item.answer,
+                    type: "fill_blank",
+                    options: { 
+                        instruction: "Put the verb into the correct form, positive or negative.",
+                        isExample: item.isExample
+                    },
+                    order: idx + 1
+                }))
+            });
+        }
+    }
   }
 
   // Seed Pronunciation Sounds
@@ -406,13 +627,16 @@ async function main() {
   const wordCount = await prisma.vocabularyWord.count();
   const exerciseCount = await prisma.vocabularyExercise.count();
   const questionCount = await prisma.vocabularyQuestion.count();
+  const grammarBookCount = await prisma.grammarBook.count();
+  const grammarUnitCount = await prisma.grammarUnit.count();
+  const grammarExerciseCount = await prisma.grammarExercise.count();
 
   console.log('\n✅ Database seeding completed!');
   console.log(`   📚 ${vocabCount} vocabulary books`);
-  console.log(`   📄 ${unitCount} units`);
-  console.log(`   📝 ${wordCount} words`);
-  console.log(`   ❓ ${exerciseCount} exercises`);
-  console.log(`   ❔ ${questionCount} questions`);
+  console.log(`   📄 ${unitCount} vocabulary units`);
+  console.log(`   📖 ${grammarBookCount} grammar books`);
+  console.log(`   📄 ${grammarUnitCount} grammar units`);
+  console.log(`   ✍️ ${grammarExerciseCount} grammar exercises`);
 }
 
 main()

@@ -1,14 +1,41 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { grammarBooks } from "../data";
+import { notFound, useParams } from "next/navigation";
+import { grammarApi } from "@/services/learning.api";
+import { GrammarBook } from "@/types";
 import UnitListClient from "./UnitListClient";
 
 
-export default async function BookPage({ params }: { params: { topicSlug: string } }) {
-  const { topicSlug } = await params; // topicSlug is 'elementary', 'intermediate', etc.
+export default function BookPage() {
+  const params = useParams();
+  const topicSlug = params.topicSlug as string;
+  const [book, setBook] = useState<GrammarBook | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const book = grammarBooks.find((b) => b.id === topicSlug);
+  useEffect(() => {
+    const fetchBook = async () => {
+        try {
+            const data = await grammarApi.getBook(topicSlug);
+            setBook(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    if (topicSlug) fetchBook();
+  }, [topicSlug]);
+
+
+  if (loading) {
+     return (
+      <div className="container mx-auto max-w-screen-xl px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <div className="w-12 h-12 border-4 border-[#FFC600] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!book) {
     return notFound();
@@ -29,7 +56,7 @@ export default async function BookPage({ params }: { params: { topicSlug: string
 
       {/* Unit List */}
       <UnitListClient
-        units={book.units}
+        units={book.units || []}
         topicSlug={topicSlug}
         bookColor={book.color}
         bookLevel={book.level}

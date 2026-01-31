@@ -1,10 +1,36 @@
 "use client";
 
-import React from 'react';
-import { grammarBooks } from './data';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { grammarApi } from '@/services/learning.api';
+import type { GrammarBook } from '@/types';
 
 export default function GrammarPage() {
+  const [books, setBooks] = useState<GrammarBook[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const data = await grammarApi.getBooks();
+        setBooks(data);
+      } catch (error) {
+        console.error("Failed to fetch grammar books", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-screen-xl px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <div className="w-12 h-12 border-4 border-[#FFC600] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className='container mx-auto max-w-screen-xl px-4 py-8'>
 
@@ -18,10 +44,10 @@ export default function GrammarPage() {
       <h1 className="text-4xl font-bold mb-12 text-black">Grammar</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {grammarBooks.map((book, index) => (
+        {books.map((book, index) => (
           <Link
             key={index}
-            href={`/grammar/${book.id}`}
+            href={`/grammar/${book.slug}`}
             className="block h-full group"
           >
             <div
@@ -30,7 +56,7 @@ export default function GrammarPage() {
               {/* Colored Header mimicking book cover */}
               <div
                 className="w-full aspect-[3/4] p-8 flex flex-col justify-between text-white relative"
-                style={{ backgroundColor: book.color }}
+                style={{ backgroundColor: book.color || '#3B82F6' }}
               >
                 {/* Mimic Cambridge Book Cover Design */}
                 <div>
@@ -56,7 +82,7 @@ export default function GrammarPage() {
 
                 <div className="flex gap-2 items-center mb-6">
                   <img src="https://res.cloudinary.com/dalaaegob/image/upload/v1769774878/dictionary-icon_qxfgms.png" alt="" className="w-5 h-5 opacity-60" />
-                  <p className="text-gray-500 font-medium text-sm">{book.unit_count} units</p>
+                  <p className="text-gray-500 font-medium text-sm">{book.unitCount} units</p>
                 </div>
 
                 <button className="mt-auto w-full bg-[#FACC15] text-black font-bold py-3 px-4 rounded-xl uppercase tracking-wide hover:opacity-90 transition-opacity">

@@ -7,6 +7,7 @@ import { pronunciationApi } from '@/services/learning.api';
 import { useAuth } from '@/contexts/AuthContext';
 import { PronunciationRecorder } from '@/components/pronunciation/PronunciationRecorder';
 import type { PronunciationSound } from '@/types';
+import { ipaData } from '../../data';
 
 export default function SoundDetailPage() {
   const params = useParams();
@@ -22,26 +23,43 @@ export default function SoundDetailPage() {
     const fetchSound = async () => {
       try {
         setLoading(true);
-        // For now, we might not have a backend endpoint that returns example words perfectly structured
-        // So we might fetch the sound metadata.
-        // If the backend doesn't exist yet, we can mock it here for the UI demo.
+
+        // Find static data for examples
+        const allSounds = [
+          ...ipaData.monophthongs, 
+          ...ipaData.diphthongs, 
+          ...ipaData.consonants
+        ];
+        const staticData = allSounds.find(s => s.symbol === symbol);
+
         try {
             const data = await pronunciationApi.getSound(symbol);
-            if (data) setSound(data);
+            if (data) {
+                // Blend API data with static examples
+                setSound({
+                    ...data,
+                    exampleWords: (staticData as any)?.examples || ['example', 'test'] 
+                } as any);
+            }
             else throw new Error('Sound not found');
         } catch (apiErr) {
-            // Fallback mock data if API fails or returns nothing (for development)
-            console.warn("API failed, using mock data", apiErr);
-            setSound({
-                id: 'mock-id',
-                symbol: symbol,
-                name: 'Long Vowel',
-                type: 'monophthong',
-                description: 'Open your mouth wide and stretch your lips.',
-                exampleWords: ['see', 'tree', 'me'], // We assume backend returns this now or we mock it
-                videoUrl: '',
-                audioUrl: '' 
-            } as any);
+            console.warn("API failed, using mock/static data", apiErr);
+            if (staticData) {
+               setSound({
+                 id: 'static-id',
+                 symbol: staticData.symbol,
+                 name: 'Sound Detail',
+                 type: staticData.type,
+                 description: 'Practice this sound using the words below.',
+                 exampleWords: (staticData as any).examples || [],
+                 videoUrl: '',
+                 audioUrl: '',
+                 word: staticData.word
+               } as any);
+            } else {
+                 // Fallback if not found in static either (should not happen if link came from chart)
+                 throw new Error('Sound not found');
+            }
         }
       } catch (err: any) {
         setError(err.message);
@@ -128,12 +146,30 @@ export default function SoundDetailPage() {
             </h2>
 
             <div className="space-y-6">
-              {/* Check if we have example words, otherwise map some defaults */}
-              {(((sound as any).exampleWords) || ['example', 'test', 'demo']).map((word: string, idx: number) => (
+                  {/* Check if we have example words, otherwise map some defaults */}
+              {(((sound as any).exampleWords) || []).map((item: any, idx: number) => {
+                 // Handle both string and object formats for backward compatibility
+                 const word = typeof item === 'string' ? item : item.word;
+                 const ipa = typeof item === 'string' ? '' : item.ipa;
+
+                 return (
                 <div key={idx} className="bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">{word}</h3>
-                    <button className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                    <div>
+                        <h3 className="text-xl font-bold">{word}</h3>
+                        {ipa && <span className="text-gray-500 font-mono text-sm">/{ipa}/</span>}
+                    </div>
+                    <button 
+                        onClick={() => {
+                            if ('speechSynthesis' in window) {
+                                const utterance = new SpeechSynthesisUtterance(word);
+                                utterance.lang = 'en-US'; // or en-GB
+                                window.speechSynthesis.speak(utterance);
+                            }
+                        }}
+                        className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors active:scale-95"
+                        title="Listen"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                       </svg>
@@ -151,7 +187,12 @@ export default function SoundDetailPage() {
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
+              
+              {(!((sound as any).exampleWords) || (sound as any).exampleWords.length === 0) && (
+                <div className="text-gray-500 text-center italic">No practice words available</div>
+              )}
             </div>
           </div>
         </div>
