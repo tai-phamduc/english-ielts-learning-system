@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Post, Patch, Body, UseGuards, Request, Query } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Patch,
+  Body,
+  UseGuards,
+  Request,
+  Query,
+} from "@nestjs/common";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { IeltsService } from "./ielts.service";
 import { IeltsRoadmapService } from "./ielts-roadmap.service";
@@ -9,8 +19,8 @@ export class IeltsController {
   constructor(
     private readonly ieltsService: IeltsService,
     private readonly ieltsRoadmapService: IeltsRoadmapService,
-    private readonly streakService: StreakService
-  ) { }
+    private readonly streakService: StreakService,
+  ) {}
 
   @Get("skills")
   async getSkills() {
@@ -64,10 +74,7 @@ export class IeltsController {
   }
   @UseGuards(JwtAuthGuard)
   @Get("writing-exercises/:id/my-answer")
-  async getWritingUserAnswer(
-    @Request() req: any,
-    @Param("id") id: string
-  ) {
+  async getWritingUserAnswer(@Request() req: any, @Param("id") id: string) {
     return this.ieltsService.getWritingUserAnswer(req.user.id, id);
   }
 
@@ -76,20 +83,40 @@ export class IeltsController {
   async saveWritingUserAnswer(
     @Request() req: any,
     @Param("id") id: string,
-    @Body() body: { intro: string; overview: string; body1: string; body2: string }
+    @Body() body: { answers: Record<string, string> },
   ) {
-    return this.ieltsService.saveWritingUserAnswer(req.user.id, id, body);
+    return this.ieltsService.saveWritingUserAnswer(
+      req.user.id,
+      id,
+      body.answers,
+    );
   }
 
-  // ── Exercise Snippet (public — used for lesson examples) ────────────────
+  // ── Exercise Snippet (public — used for foundationVocabLesson examples) ────────────────
 
   @Get("exercise-snippet")
   async getExerciseSnippet(
     @Query("type") type: string,
     @Query("id") id: string,
-    @Query("groupIndex") groupIndex: string
+    @Query("groupIndex") groupIndex: string,
   ) {
-    return this.ieltsService.findExerciseSnippet(type, id, parseInt(groupIndex ?? "0", 10));
+    return this.ieltsService.findExerciseSnippet(
+      type,
+      id,
+      parseInt(groupIndex ?? "0", 10),
+    );
+  }
+
+  // ── Speaking ──────────────────────────────────────────────────────────
+
+  @Get("exercises/speaking/:lessonId")
+  async getSpeakingExercises(@Param("lessonId") lessonId: string) {
+    return this.ieltsService.findSpeakingExercisesByLesson(lessonId);
+  }
+
+  @Get("exercises/speaking/detail/:id")
+  async getSpeakingExerciseDetail(@Param("id") id: string) {
+    return this.ieltsService.findSpeakingExerciseById(id);
   }
 
   // ── Progress Tracking ───────────────────────────────────────────────────
@@ -110,7 +137,8 @@ export class IeltsController {
       listeningExerciseId?: string;
       readingExerciseId?: string;
       writingExerciseId?: string;
-    }
+      speakingExerciseId?: string;
+    },
   ) {
     return this.ieltsService.markItemCompleted(req.user.id, body);
   }
@@ -138,8 +166,8 @@ export class IeltsController {
     return this.ieltsRoadmapService["prisma"].ieltsProfile.findUnique({
       where: { userId: req.user.id },
       include: {
-        user: { select: { firstName: true, lastName: true } }
-      }
+        user: { select: { firstName: true, lastName: true } },
+      },
     });
   }
 
@@ -147,7 +175,7 @@ export class IeltsController {
   @Patch("profile")
   async updateProfile(
     @Request() req: any,
-    @Body() body: { examDate?: string }
+    @Body() body: { examDate?: string },
   ) {
     return this.ieltsRoadmapService.updateProfile(req.user.id, body);
   }
@@ -156,7 +184,8 @@ export class IeltsController {
   @Post("onboarding")
   async processOnboarding(
     @Request() req: any,
-    @Body() body: {
+    @Body()
+    body: {
       targetBand: number;
       dailyCommitmentMins: number;
       examDate?: string;
@@ -165,7 +194,7 @@ export class IeltsController {
       placementListening?: number;
       placementReading?: number;
       placementWriting?: number;
-    }
+    },
   ) {
     return this.ieltsRoadmapService.processOnboarding(req.user.id, body);
   }
@@ -182,7 +211,7 @@ export class IeltsController {
   }
 
   // ── Streak Tracking ──────────────────────────────────────────────────────
-  
+
   @UseGuards(JwtAuthGuard)
   @Get("streak")
   async getStreak(@Request() req: any) {

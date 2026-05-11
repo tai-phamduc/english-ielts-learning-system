@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsArray, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  Min,
+  Max,
+} from "class-validator";
 
 export class UpdateWordProgressDto {
   @IsString()
@@ -9,13 +16,7 @@ export class UpdateWordProgressDto {
   wordsLearned: number;
 }
 
-export class SubmitExerciseDto {
-  @IsString()
-  unitId: string;
 
-  @IsArray()
-  answers: { exerciseId: string; answer: string }[];
-}
 
 export class SubmitQuestionsDto {
   @IsString()

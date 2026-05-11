@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { Deck, DeckWithCounts, Flashcard, SubmitReviewRequest, StudyCard, VocabLabStats, CardType, CardTypeField, CardTemplate, FieldStyle, CardStyle } from '@/types';
+import type { Deck, DeckWithCounts, Flashcard, SubmitReviewRequest, StudyCard, VocabLabStats, CardType, CardTypeField, CardTemplate, FieldStyle, CardStyle, SharedDeck } from '@/types';
 
 export interface CreateCardTypeFieldPayload {
   name: string;
@@ -30,6 +30,39 @@ export const vocabLabApi = {
   },
   deleteDeck: async (id: string) => {
     const { data } = await api.delete(`/vocab-lab/decks/${id}`);
+    return data;
+  },
+  exportDeck: async (id: string) => {
+    const { data } = await api.get(`/vocab-lab/decks/${id}/export`);
+    return data;
+  },
+  importDeck: async (lexonData: any) => {
+    const { data } = await api.post<{
+      deckId: string;
+      deckName: string;
+      cardTypeId: string | null;
+      cardsImported: number;
+    }>('/vocab-lab/decks/import', lexonData);
+    return data;
+  },
+  publishDeck: async (id: string, payload: { name: string; description?: string; tags?: string[] }) => {
+    const { data } = await api.post(`/vocab-lab/decks/${id}/publish`, payload);
+    return data;
+  },
+  browseSharedDecks: async (params?: { search?: string; sort?: string; category?: string; limit?: number; publisherId?: string }) => {
+    const { data } = await api.get<SharedDeck[]>('/vocab-lab/community/decks', { params });
+    return data;
+  },
+  getSharedDeck: async (id: string) => {
+    const { data } = await api.get<SharedDeck>(`/vocab-lab/community/decks/${id}`);
+    return data;
+  },
+  importSharedDeck: async (id: string) => {
+    const { data } = await api.post(`/vocab-lab/community/decks/${id}/import`);
+    return data;
+  },
+  unpublishDeck: async (id: string) => {
+    const { data } = await api.delete(`/vocab-lab/community/decks/${id}`);
     return data;
   },
 
@@ -64,6 +97,21 @@ export const vocabLabApi = {
     const { data } = await api.get<Flashcard[]>('/vocab-lab/cards', { params });
     return data;
   },
+  createFlashcardFromVocabulary: async (payload: { bookName: string; word: any }) => {
+    const { data } = await api.post<Flashcard>('/vocab-lab/from-foundationVocabWord', payload);
+    return data;
+  },
+  createFlashcardFromVocabularyWithReview: async (payload: {
+    bookName: string;
+    word: any;
+    rating: number; // 1=Again, 2=Hard, 3=Good, 4=Easy
+  }) => {
+    const { data } = await api.post<Flashcard>(
+      '/vocab-lab/from-foundationVocabWord/with-review',
+      payload,
+    );
+    return data;
+  },
 
   // ==================== STUDY / REVIEW ====================
   getStudyCards: async (deckId: string) => {
@@ -76,8 +124,10 @@ export const vocabLabApi = {
   },
 
   // ==================== STATS & TAGS ====================
-  getStats: async () => {
-    const { data } = await api.get<VocabLabStats>('/vocab-lab/stats');
+  getStats: async (range?: number) => {
+    const { data } = await api.get<VocabLabStats>('/vocab-lab/stats', {
+      params: range ? { range } : undefined,
+    });
     return data;
   },
   getTags: async () => {

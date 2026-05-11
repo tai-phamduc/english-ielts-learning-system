@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GradingProvider } from "@/contexts/GradingContext";
 import { IeltsSidebarProvider } from "@/contexts/IeltsSidebarContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,11 +15,25 @@ export const metadata: Metadata = {
   }
 };
 
-import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster } from "@/components/Toaster";
 import { GlobalVocabFab } from "@/components/GlobalVocabFab";
 import { GlobalAIChatFab } from "@/components/GlobalAIChatFab";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import GlobalUpgradeModal from "@/components/GlobalUpgradeModal";
+
+// Inline script runs before React hydrates — prevents flash of wrong theme
+const themeScript = `
+(function() {
+  try {
+    var t = localStorage.getItem('theme');
+    if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  } catch(e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -24,22 +41,34 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Flash-prevention: sets dark class synchronously before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="antialiased">
-        <AuthProvider>
-          <GradingProvider>
-            <IeltsSidebarProvider>
-              <ScrollToTop />
-              <Header />
-              <Toaster />
-              <GlobalVocabFab />
-              <GlobalAIChatFab />
-              {children}
-            </IeltsSidebarProvider>
-          </GradingProvider>
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+        <ThemeProvider>
+          <AuthProvider>
+            <SubscriptionProvider>
+              <NotificationProvider>
+                <GradingProvider>
+                  <IeltsSidebarProvider>
+                    <ScrollToTop />
+                    <Navbar />
+                    <Toaster />
+                    <GlobalVocabFab />
+                    <GlobalAIChatFab />
+                    <GlobalUpgradeModal />
+                    {children}
+                  </IeltsSidebarProvider>
+                </GradingProvider>
+              </NotificationProvider>
+            </SubscriptionProvider>
+          </AuthProvider>
+        </ThemeProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
 }
-

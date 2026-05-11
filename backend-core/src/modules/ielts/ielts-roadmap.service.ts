@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../common/prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../common/prisma/prisma.service";
 
 export interface RoadmapItem {
   id: string;
   title: string;
-  type: 'lesson' | 'exercise';
+  type: "lesson" | "exercise";
   skill: string;
   url: string;
   isCompleted: boolean;
@@ -21,9 +21,15 @@ export interface RoadmapStep {
 
 @Injectable()
 export class IeltsRoadmapService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async generateRoadmap(userId: string): Promise<{ steps: RoadmapStep[]; currentStep: number; requiresOnboarding?: boolean }> {
+  async generateRoadmap(
+    userId: string,
+  ): Promise<{
+    steps: RoadmapStep[];
+    currentStep: number;
+    requiresOnboarding?: boolean;
+  }> {
     const profile = await this.prisma.ieltsProfile.findUnique({
       where: { userId },
     });
@@ -32,8 +38,8 @@ export class IeltsRoadmapService {
       return { steps: [], currentStep: 1, requiresOnboarding: true };
     }
 
-    const skills = await this.prisma.ieltsSkill.findMany({
-      orderBy: { order: 'asc' },
+    const skills = await this.prisma.ieltsBasicSkill.findMany({
+      orderBy: { order: "asc" },
     });
 
     const progressRecords = await this.prisma.ieltsBasicProgress.findMany({
@@ -41,11 +47,16 @@ export class IeltsRoadmapService {
     });
 
     // Quick lookup for completions
-    const isCompleted = (type: 'lesson' | 'listeningExercise' | 'readingExercise', id: string) => {
+    const isCompleted = (
+      type: "lesson" | "listeningExercise" | "readingExercise",
+      id: string,
+    ) => {
       return progressRecords.some((p) => {
-        if (type === 'lesson') return p.lessonId === id && p.isCompleted;
-        if (type === 'listeningExercise') return p.listeningExerciseId === id && p.isCompleted;
-        if (type === 'readingExercise') return p.readingExerciseId === id && p.isCompleted;
+        if (type === "lesson") return p.lessonId === id && p.isCompleted;
+        if (type === "listeningExercise")
+          return p.listeningExerciseId === id && p.isCompleted;
+        if (type === "readingExercise")
+          return p.readingExerciseId === id && p.isCompleted;
         return false;
       });
     };
@@ -56,103 +67,115 @@ export class IeltsRoadmapService {
     for (const skill of skills) {
       const q: RoadmapItem[] = [];
       let skillScore = 0;
-      if (skill.name === 'Listening') skillScore = profile.placementListening || 0;
-      else if (skill.name === 'Reading') skillScore = profile.placementReading || 0;
-      else if (skill.name === 'Writing') skillScore = profile.placementWriting || 0;
-      
+      if (skill.name === "Listening")
+        skillScore = profile.placementListening || 0;
+      else if (skill.name === "Reading")
+        skillScore = profile.placementReading || 0;
+      else if (skill.name === "Writing")
+        skillScore = profile.placementWriting || 0;
+
       // If score is >= 90%, we completely skip the skill
       if (skillScore >= 90) {
         queues[skill.name] = [];
         continue;
       }
 
-      const lessons = await this.prisma.ieltsLesson.findMany({
+      const lessons = await this.prisma.ieltsBasicLesson.findMany({
         where: { skillId: skill.id },
-        orderBy: { order: 'asc' },
+        orderBy: { order: "asc" },
       });
 
-      for (const lesson of lessons) {
-        // Push the lesson itself
+      for (const foundationVocabLesson of lessons) {
+        // Push the foundationVocabLesson itself
         q.push({
-          id: lesson.id,
-          title: lesson.title,
-          type: 'lesson',
+          id: foundationVocabLesson.id,
+          title: foundationVocabLesson.title,
+          type: "lesson",
           skill: skill.name,
-          url: `/ielts/basic/${skill.name.toLowerCase()}/lessons/${lesson.id}`,
-          isCompleted: isCompleted('lesson', lesson.id),
+          url: `/ielts/basic/${skill.name.toLowerCase()}/lessons/${foundationVocabLesson.id}`,
+          isCompleted: isCompleted("lesson", foundationVocabLesson.id),
         });
 
         // Push associated exercises
-        if (skill.name === 'Listening') {
-          const exercises = await this.prisma.ieltsListeningExercise.findMany({
-            where: { lessonId: lesson.id },
-            orderBy: { order: 'asc' },
+        if (skill.name === "Listening") {
+          const exercises = await this.prisma.ieltsBasicListeningExercise.findMany({
+            where: { lessonId: foundationVocabLesson.id },
+            orderBy: { order: "asc" },
           });
-          
+
           let exercisesToInclude = exercises;
           if (skillScore >= 70) {
             exercisesToInclude = exercises.slice(0, 1);
           } else if (skillScore >= 50) {
-            exercisesToInclude = exercises.slice(0, Math.max(1, Math.ceil(exercises.length / 2)));
+            exercisesToInclude = exercises.slice(
+              0,
+              Math.max(1, Math.ceil(exercises.length / 2)),
+            );
           }
 
           exercisesToInclude.forEach((ex) => {
             q.push({
               id: ex.id,
               title: ex.topic,
-              type: 'exercise',
+              type: "exercise",
               skill: skill.name,
-              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${lesson.id}`,
-              isCompleted: isCompleted('listeningExercise', ex.id),
-              lessonId: lesson.id,
+              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${foundationVocabLesson.id}`,
+              isCompleted: isCompleted("listeningExercise", ex.id),
+              lessonId: foundationVocabLesson.id,
             });
           });
-        } else if (skill.name === 'Reading') {
-          const exercises = await this.prisma.ieltsReadingExercise.findMany({
-            where: { lessonId: lesson.id },
-            orderBy: { order: 'asc' },
+        } else if (skill.name === "Reading") {
+          const exercises = await this.prisma.ieltsBasicReadingExercise.findMany({
+            where: { lessonId: foundationVocabLesson.id },
+            orderBy: { order: "asc" },
           });
 
           let exercisesToInclude = exercises;
           if (skillScore >= 70) {
             exercisesToInclude = exercises.slice(0, 1);
           } else if (skillScore >= 50) {
-            exercisesToInclude = exercises.slice(0, Math.max(1, Math.ceil(exercises.length / 2)));
+            exercisesToInclude = exercises.slice(
+              0,
+              Math.max(1, Math.ceil(exercises.length / 2)),
+            );
           }
 
           exercisesToInclude.forEach((ex) => {
             q.push({
               id: ex.id,
               title: ex.topic,
-              type: 'exercise',
+              type: "exercise",
               skill: skill.name,
-              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${lesson.id}`,
-              isCompleted: isCompleted('readingExercise', ex.id),
-              lessonId: lesson.id,
+              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${foundationVocabLesson.id}`,
+              isCompleted: isCompleted("readingExercise", ex.id),
+              lessonId: foundationVocabLesson.id,
             });
           });
-        } else if (skill.name === 'Writing') {
-          const exercises = await this.prisma.ieltsWritingExercise.findMany({
-            where: { lessonId: lesson.id },
-            orderBy: { order: 'asc' },
+        } else if (skill.name === "Writing") {
+          const exercises = await this.prisma.ieltsBasicWritingExercise.findMany({
+            where: { lessonId: foundationVocabLesson.id },
+            orderBy: { order: "asc" },
           });
-          
+
           let exercisesToInclude = exercises;
           if (skillScore >= 70) {
             exercisesToInclude = exercises.slice(0, 1);
           } else if (skillScore >= 50) {
-            exercisesToInclude = exercises.slice(0, Math.max(1, Math.ceil(exercises.length / 2)));
+            exercisesToInclude = exercises.slice(
+              0,
+              Math.max(1, Math.ceil(exercises.length / 2)),
+            );
           }
-          
+
           exercisesToInclude.forEach((ex) => {
             q.push({
               id: ex.id,
               title: ex.topic,
-              type: 'exercise',
+              type: "exercise",
               skill: skill.name,
-              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${lesson.id}`,
+              url: `/ielts/basic/${skill.name.toLowerCase()}/exercises/${ex.id}?lessonId=${foundationVocabLesson.id}`,
               isCompleted: false, // Writing doesn't use the simple lookup right now
-              lessonId: lesson.id,
+              lessonId: foundationVocabLesson.id,
             });
           });
         }
@@ -185,9 +208,12 @@ export class IeltsRoadmapService {
     let currentStepMins = 0;
 
     for (const item of flattenedQueue) {
-      const itemMins = item.type === 'lesson' ? 10 : 15;
+      const itemMins = item.type === "lesson" ? 10 : 15;
 
-      if (currentStepItems.length > 0 && currentStepMins + itemMins > dailyMinutes) {
+      if (
+        currentStepItems.length > 0 &&
+        currentStepMins + itemMins > dailyMinutes
+      ) {
         // Step is full, push it and start a new one
         steps.push({
           step: currentStepNum++,
@@ -246,24 +272,30 @@ export class IeltsRoadmapService {
     }
 
     // Current step is the first step containing an unlocked, incomplete item.
-    const activeStep = steps.find((s) => s.items.some((item) => !item.isLocked && !item.isCompleted));
-    let currentStep = activeStep ? activeStep.step : (steps.length > 0 ? steps[steps.length - 1].step : 1);
+    const activeStep = steps.find((s) =>
+      s.items.some((item) => !item.isLocked && !item.isCompleted),
+    );
+    let currentStep = activeStep
+      ? activeStep.step
+      : steps.length > 0
+        ? steps[steps.length - 1].step
+        : 1;
 
     return { steps, currentStep };
   }
 
   async processOnboarding(
     userId: string,
-    data: { 
-      targetBand: number; 
-      dailyCommitmentMins: number; 
-      takePlacement: boolean; 
+    data: {
+      targetBand: number;
+      dailyCommitmentMins: number;
+      takePlacement: boolean;
       placementScore?: number;
       placementListening?: number;
       placementReading?: number;
       placementWriting?: number;
       examDate?: string;
-    }
+    },
   ) {
     const examDateParsed = data.examDate ? new Date(data.examDate) : null;
     await this.prisma.ieltsProfile.upsert({
@@ -292,51 +324,100 @@ export class IeltsRoadmapService {
     });
 
     if (data.takePlacement) {
-      const processSkillCompletion = async (skillName: string, score: number | undefined) => {
+      const processSkillCompletion = async (
+        skillName: string,
+        score: number | undefined,
+      ) => {
         if (!score || score < 90) return;
-        
-        const skill = await this.prisma.ieltsSkill.findUnique({ where: { name: skillName } });
+
+        const skill = await this.prisma.ieltsBasicSkill.findUnique({
+          where: { name: skillName },
+        });
         if (!skill) return;
 
-        const lessons = await this.prisma.ieltsLesson.findMany({ where: { skillId: skill.id } });
-        for (const lesson of lessons) {
+        const lessons = await this.prisma.ieltsBasicLesson.findMany({
+          where: { skillId: skill.id },
+        });
+        for (const foundationVocabLesson of lessons) {
           let existing = await this.prisma.ieltsBasicProgress.findFirst({
-            where: { userId, lessonId: lesson.id }
+            where: { userId, lessonId: foundationVocabLesson.id },
           });
           if (existing) {
-            await this.prisma.ieltsBasicProgress.update({ where: { id: existing.id }, data: { isCompleted: true } });
+            await this.prisma.ieltsBasicProgress.update({
+              where: { id: existing.id },
+              data: { isCompleted: true },
+            });
           } else {
-            await this.prisma.ieltsBasicProgress.create({ data: { userId, lessonId: lesson.id, isCompleted: true } });
+            await this.prisma.ieltsBasicProgress.create({
+              data: { userId, lessonId: foundationVocabLesson.id, isCompleted: true },
+            });
           }
 
-          if (skillName === 'Listening') {
-            const exercises = await this.prisma.ieltsListeningExercise.findMany({ where: { lessonId: lesson.id } });
+          if (skillName === "Listening") {
+            const exercises = await this.prisma.ieltsBasicListeningExercise.findMany(
+              { where: { lessonId: foundationVocabLesson.id } },
+            );
             for (const ex of exercises) {
-              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({ where: { userId, listeningExerciseId: ex.id }});
-              if (existingEx) await this.prisma.ieltsBasicProgress.update({ where: { id: existingEx.id }, data: { isCompleted: true }});
-              else await this.prisma.ieltsBasicProgress.create({ data: { userId, listeningExerciseId: ex.id, isCompleted: true }});
+              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({
+                where: { userId, listeningExerciseId: ex.id },
+              });
+              if (existingEx)
+                await this.prisma.ieltsBasicProgress.update({
+                  where: { id: existingEx.id },
+                  data: { isCompleted: true },
+                });
+              else
+                await this.prisma.ieltsBasicProgress.create({
+                  data: {
+                    userId,
+                    listeningExerciseId: ex.id,
+                    isCompleted: true,
+                  },
+                });
             }
-          } else if (skillName === 'Reading') {
-            const exercises = await this.prisma.ieltsReadingExercise.findMany({ where: { lessonId: lesson.id } });
+          } else if (skillName === "Reading") {
+            const exercises = await this.prisma.ieltsBasicReadingExercise.findMany({
+              where: { lessonId: foundationVocabLesson.id },
+            });
             for (const ex of exercises) {
-              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({ where: { userId, readingExerciseId: ex.id }});
-              if (existingEx) await this.prisma.ieltsBasicProgress.update({ where: { id: existingEx.id }, data: { isCompleted: true }});
-              else await this.prisma.ieltsBasicProgress.create({ data: { userId, readingExerciseId: ex.id, isCompleted: true }});
+              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({
+                where: { userId, readingExerciseId: ex.id },
+              });
+              if (existingEx)
+                await this.prisma.ieltsBasicProgress.update({
+                  where: { id: existingEx.id },
+                  data: { isCompleted: true },
+                });
+              else
+                await this.prisma.ieltsBasicProgress.create({
+                  data: { userId, readingExerciseId: ex.id, isCompleted: true },
+                });
             }
-          } else if (skillName === 'Writing') {
-            const exercises = await this.prisma.ieltsWritingExercise.findMany({ where: { lessonId: lesson.id } });
+          } else if (skillName === "Writing") {
+            const exercises = await this.prisma.ieltsBasicWritingExercise.findMany({
+              where: { lessonId: foundationVocabLesson.id },
+            });
             for (const ex of exercises) {
-              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({ where: { userId, writingExerciseId: ex.id }});
-              if (existingEx) await this.prisma.ieltsBasicProgress.update({ where: { id: existingEx.id }, data: { isCompleted: true }});
-              else await this.prisma.ieltsBasicProgress.create({ data: { userId, writingExerciseId: ex.id, isCompleted: true }});
+              let existingEx = await this.prisma.ieltsBasicProgress.findFirst({
+                where: { userId, writingExerciseId: ex.id },
+              });
+              if (existingEx)
+                await this.prisma.ieltsBasicProgress.update({
+                  where: { id: existingEx.id },
+                  data: { isCompleted: true },
+                });
+              else
+                await this.prisma.ieltsBasicProgress.create({
+                  data: { userId, writingExerciseId: ex.id, isCompleted: true },
+                });
             }
           }
         }
       };
 
-      await processSkillCompletion('Listening', data.placementListening);
-      await processSkillCompletion('Reading', data.placementReading);
-      await processSkillCompletion('Writing', data.placementWriting);
+      await processSkillCompletion("Listening", data.placementListening);
+      await processSkillCompletion("Reading", data.placementReading);
+      await processSkillCompletion("Writing", data.placementWriting);
     }
 
     return { success: true };
@@ -347,7 +428,7 @@ export class IeltsRoadmapService {
     if (data.examDate !== undefined) {
       updateData.examDate = data.examDate ? new Date(data.examDate) : null;
     }
-    
+
     return this.prisma.ieltsProfile.update({
       where: { userId },
       data: updateData,

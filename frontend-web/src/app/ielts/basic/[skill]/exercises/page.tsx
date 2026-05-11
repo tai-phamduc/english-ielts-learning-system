@@ -9,13 +9,14 @@ export default async function ExercisesPage({
   const isListening = params.skill.toLowerCase() === "listening";
   const isReading = params.skill.toLowerCase() === "reading";
   const isWriting = params.skill.toLowerCase() === "writing";
+  const isSpeaking = params.skill.toLowerCase() === "speaking";
   const skillCapitalized =
     params.skill.charAt(0).toUpperCase() + params.skill.slice(1).toLowerCase();
 
   let exercises: any[] = [];
 
   try {
-    // 1. Fetch lessons for the skill to get lesson IDs
+    // 1. Fetch lessons for the skill to get foundationVocabLesson IDs
     const lessonsRes = await fetch(
       `http://localhost:3000/api/v1/ielts/skills/${skillCapitalized}/lessons`,
       { cache: "no-store" }
@@ -24,16 +25,16 @@ export default async function ExercisesPage({
     if (lessonsRes.ok) {
       const allLessons = await lessonsRes.json();
 
-      if (allLessons.length > 0 && (isListening || isReading || isWriting)) {
-        const endpoint = isListening ? "listening-exercises" : isWriting ? "writing-exercises" : "reading-exercises";
+      if (allLessons.length > 0 && (isListening || isReading || isWriting || isSpeaking)) {
+        const endpoint = isListening ? "listening-exercises" : isWriting ? "writing-exercises" : isSpeaking ? "exercises/speaking" : "reading-exercises";
 
-        // 2. Fetch exercises for each lesson
+        // 2. Fetch exercises for each foundationVocabLesson
         const exPromises = allLessons.map(async (l: any) => {
           try {
-            const exRes = await fetch(
-              `http://localhost:3000/api/v1/ielts/lessons/${l.id}/${endpoint}`,
-              { cache: "no-store" }
-            );
+            const url = isSpeaking 
+              ? `http://localhost:3000/api/v1/ielts/${endpoint}/${l.id}`
+              : `http://localhost:3000/api/v1/ielts/lessons/${l.id}/${endpoint}`;
+            const exRes = await fetch(url, { cache: "no-store" });
             if (exRes.ok) {
               const exData = await exRes.json();
               return exData.map((ex: any) => ({
@@ -43,7 +44,7 @@ export default async function ExercisesPage({
               }));
             }
           } catch (e) {
-            console.error(`Failed to fetch exercises for lesson ${l.id}`, e);
+            console.error(`Failed to fetch exercises for foundationVocabLesson ${l.id}`, e);
           }
           return [];
         });
@@ -65,7 +66,7 @@ export default async function ExercisesPage({
   }
 
   const toTypeLabel = (title: string) =>
-    (title || "Other").replace(/^Chapter\s+\d+\s*[-–]\s*/i, "").trim() || "Other";
+    (title || "Other").replace(/^(Task \d+\s*[-–]\s*)?Chapter\s+\d+\s*[-–]\s*/i, "").trim() || "Other";
 
   const groups: { title: string; items: any[] }[] = [];
   for (const ex of exercises) {
@@ -79,14 +80,14 @@ export default async function ExercisesPage({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-3xl shadow-sm border border-gray-100 p-6 lg:p-8">
-      <div className="flex flex-col items-start mb-8 pb-4 border-b border-gray-100">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-          <Link href="/ielts/basic/library" className="hover:text-gray-900 transition-colors px-1">Library</Link>
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 lg:p-8 transition-colors">
+      <div className="flex flex-col items-start mb-8 pb-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2 flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+          <Link href="/ielts/basic/library" className="hover:text-gray-900 dark:hover:text-white transition-colors px-1">Library</Link>
           <span className="opacity-30">/</span>
-          <span className="px-1 text-gray-300">{skillCapitalized}</span>
+          <span className="px-1 text-gray-300 dark:text-gray-700">{skillCapitalized}</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
           {skillCapitalized} Exercises
         </h1>
       </div>
